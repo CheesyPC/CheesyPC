@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>For Janani ❤️</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #ff5f9e, #ff9a9e 40%, #fad0c4 70%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "Poppins", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      overflow: hidden;
+      color: #fff;
+    }
+    .card {
+      position: relative;
+      background: rgba(255,255,255,0.18);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255,255,255,0.35);
+      padding: 36px 28px 30px;
+      border-radius: 26px;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.35);
+      width: min(96vw, 520px); /* ⬅️ Bigger card width */
+      max-height: 88vh;       /* ⬅️ Taller card for gallery */
+      text-align: center;
+      overflow: hidden;
+    }
+    h1 { margin: 0 0 6px; font-size: 30px; }
+    .subtitle { opacity: .9; margin-bottom: 12px; }
+    .story { min-height: 64px; font-size: 18px; margin-bottom: 10px; }
+    .question { font-size: 22px; margin-bottom: 16px; font-weight: 600; }
+    .buttons { position: relative; height: 110px; margin-bottom: 6px; }
+    button {
+      border: none; padding: 12px 26px; border-radius: 999px;
+      font-size: 16px; cursor: pointer;
+      box-shadow: 0 10px 22px rgba(0,0,0,0.35);
+      transition: transform .15s ease, filter .15s ease;
+      user-select: none;
+    }
+    #yesBtn { background: linear-gradient(135deg, #ff2f6d, #ff9fbc); color: #fff; }
+    #yesBtn:hover { transform: translateY(-2px); filter: brightness(1.05); }
+    #noBtn { position: absolute; left: 55%; top: 10px; background: linear-gradient(135deg, #222, #555); color: #fff; }
+    .hidden { display: none; }
+    input {
+      width: 80%; padding: 12px 14px; border-radius: 999px; border: none;
+      outline: none; text-align: center; font-size: 15px; margin: 8px 0 6px;
+    }
+    .error { color: #ffd1dc; font-size: 13px; display: none; }
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-top: 14px;
+      max-height: 62vh;   /* ⬅️ More space for images */
+      overflow-y: auto;
+      padding-right: 6px;
+    }
+    .gallery img {
+      width: 100%;
+      height: 200px;     /* ⬅️ Bigger thumbnails */
+      object-fit: cover;
+      border-radius: 18px;
+      box-shadow: 0 10px 22px rgba(0,0,0,0.45);
+      cursor: pointer;
+      transition: transform .25s ease, box-shadow .25s ease;
+    }
+    .gallery img:hover { transform: scale(1.05); }
+    .footer { margin-top: 10px; font-size: 12px; opacity: .85; }
+    .preview {
+      position: fixed; inset: 0; background: rgba(0,0,0,.85);
+      display: none; align-items: center; justify-content: center; z-index: 5;
+    }
+    .preview img { max-width: 94vw; max-height: 94vh; border-radius: 16px; }
+    .preview span { position: absolute; top: 16px; right: 20px; font-size: 28px; cursor: pointer; }
+    .heart {
+      position: fixed; bottom: -20px; font-size: 18px; opacity: .8;
+      animation: floatUp 6s linear infinite; pointer-events: none; z-index: 0;
+    }
+    @keyframes floatUp {
+      0% { transform: translateY(0) scale(.8); opacity: 0; }
+      10% { opacity: .8; }
+      100% { transform: translateY(-110vh) scale(1.2); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card" id="stepAsk">
+    <h1>Hey Janani ❤️</h1>
+    <div class="subtitle">A little surprise from RG</div>
+    <div class="story" id="story"></div>
+    <div class="question">Will you be my Valentine? 🌹</div>
+
+    <div class="buttons" id="btnArea">
+      <button id="yesBtn" onclick="showLock()">Yes 😍</button>
+      <button id="noBtn">No 🙈</button>
+    </div>
+
+    <div class="hidden" id="lockBox">
+      <div>Enter your nickname to unlock 💌</div>
+      <input type="password" id="password" placeholder="Nickname" />
+      <br />
+      <button onclick="checkPassword()">Unlock ❤️</button>
+      <div class="error" id="errorMsg">Wrong password 😝 Try again!</div>
+    </div>
+
+    <div class="footer">Made with ❤️ by RG</div>
+  </div>
+
+  <div class="card hidden" id="stepGallery">
+    <h1>Our Gallery 💕</h1>
+    <div class="subtitle">Little moments, big smiles</div>
+    <div class="gallery" id="gallery"></div>
+    <div class="footer">Janani 💖 RG — Valentine’s Day</div>
+  </div>
+
+  <div class="preview" id="preview">
+    <span onclick="closePreview()">✕</span>
+    <img id="previewImg" />
+  </div>
+
+  <audio id="bgm" src="audio/love.mp3" loop></audio>
+
+<script>
+  const storyLines = [
+    "From the day I met you…",
+    "My world became a little brighter…",
+    "Your smile is still my favorite view…",
+    "So today I ask you one thing…"
+  ];
+  let storyIndex = 0, charIndex = 0;
+  const storyEl = document.getElementById("story");
+  (function typeStory() {
+    if (storyIndex < storyLines.length) {
+      const line = storyLines[storyIndex];
+      if (charIndex < line.length) {
+        storyEl.textContent += line.charAt(charIndex++);
+        setTimeout(typeStory, 40);
+      } else {
+        setTimeout(() => { storyEl.textContent = ""; charIndex = 0; storyIndex++; typeStory(); }, 900);
+      }
+    }
+  })();
+
+  const noBtn = document.getElementById("noBtn");
+  const btnArea = document.getElementById("btnArea");
+  noBtn.addEventListener("mouseenter", () => {
+    const area = btnArea.getBoundingClientRect();
+    const btn = noBtn.getBoundingClientRect();
+    noBtn.style.left = Math.random() * (area.width - btn.width) + "px";
+    noBtn.style.top  = Math.random() * (area.height - btn.height) + "px";
+  });
+
+  function showLock() {
+    document.getElementById("lockBox").classList.remove("hidden");
+  }
+
+  // 30 images: a (1).jpg ... a (30).jpg
+  const imageFiles = Array.from({ length: 30 }, (_, i) => `a (${i + 1}).jpg`);
+
+  function checkPassword() {
+    const v = document.getElementById("password").value.trim().toLowerCase();
+    if (v === "buttu") {
+      document.getElementById("stepAsk").classList.add("hidden");
+      document.getElementById("stepGallery").classList.remove("hidden");
+      loadImages();
+      const audio = document.getElementById("bgm");
+      audio.volume = 0.4;
+      audio.play().catch(()=>{});
+      celebrate();
+    } else {
+      document.getElementById("errorMsg").style.display = "block";
+    }
+  }
+
+  function loadImages() {
+    const g = document.getElementById("gallery");
+    g.innerHTML = "";
+    imageFiles.forEach(n => {
+      const img = document.createElement("img");
+      img.src = "images/" + n;
+      img.alt = "Our Memory";
+      img.onclick = () => openPreview(img.src);
+      g.appendChild(img);
+    });
+  }
+
+  function openPreview(src) {
+    document.getElementById("previewImg").src = src;
+    document.getElementById("preview").style.display = "flex";
+  }
+  function closePreview() {
+    document.getElementById("preview").style.display = "none";
+  }
+
+  function celebrate() {
+    for (let i = 0; i < 18; i++) spawnHeart();
+  }
+
+  function spawnHeart() {
+    const heart = document.createElement("div");
+    heart.className = "heart";
+    heart.textContent = "❤️";
+    heart.style.left = Math.random() * 100 + "vw";
+    heart.style.animationDuration = (4 + Math.random() * 4) + "s";
+    document.body.appendChild(heart);
+    setTimeout(() => heart.remove(), 7000);
+  }
+  setInterval(spawnHeart, 900);
+</script>
+
+</body>
+</html>
